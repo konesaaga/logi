@@ -1,3 +1,35 @@
+-- Créer les tables manquantes d'abord
+CREATE TABLE IF NOT EXISTS entrepots (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name VARCHAR(255) NOT NULL,
+    location VARCHAR(255),
+    capacity_max DECIMAL(12,2),
+    capacity_current DECIMAL(12,2) DEFAULT 0,
+    type VARCHAR(50) DEFAULT 'standard',
+    superviseur_id UUID REFERENCES users(id),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS ventes (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    code_alpha_num VARCHAR(50) UNIQUE NOT NULL,
+    commande_id UUID REFERENCES commandes(id),
+    client_id UUID REFERENCES clients(id),
+    marchandise_id UUID REFERENCES marchandises(id),
+    qte_vendue DECIMAL(10,2) NOT NULL,
+    prix_unitaire DECIMAL(10,2) NOT NULL,
+    montant_ht DECIMAL(12,2) NOT NULL,
+    montant_ttc DECIMAL(12,2) NOT NULL,
+    devise VARCHAR(3) DEFAULT 'EUR',
+    status VARCHAR(20) CHECK (status IN ('brouillon', 'confirmee', 'livree', 'annulee')) DEFAULT 'brouillon',
+    validation_status VARCHAR(20) CHECK (validation_status IN ('pending', 'approved', 'rejected')) DEFAULT 'pending',
+    validation_step INTEGER DEFAULT 1,
+    created_by_id UUID REFERENCES users(id),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- Transport multi-tronçon
 CREATE TABLE IF NOT EXISTS transport_trips (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -96,13 +128,6 @@ CREATE TABLE IF NOT EXISTS documents (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Entrepôts (ajout de colonnes pour superviseur)
-ALTER TABLE entrepots ADD COLUMN IF NOT EXISTS superviseur_id UUID REFERENCES users(id);
-
--- Ventes (ajout de colonnes pour validation)
-ALTER TABLE ventes ADD COLUMN IF NOT EXISTS validation_status VARCHAR(20) CHECK (validation_status IN ('pending', 'approved', 'rejected')) DEFAULT 'pending';
-ALTER TABLE ventes ADD COLUMN IF NOT EXISTS validation_step INTEGER DEFAULT 1;
-
 -- Index pour les performances
 CREATE INDEX IF NOT EXISTS idx_transport_legs_trip_id ON transport_legs(transport_trip_id);
 CREATE INDEX IF NOT EXISTS idx_transport_legs_status ON transport_legs(status);
@@ -111,3 +136,5 @@ CREATE INDEX IF NOT EXISTS idx_documents_entity ON documents(entity_type, entity
 CREATE INDEX IF NOT EXISTS idx_documents_status ON documents(status);
 CREATE INDEX IF NOT EXISTS idx_documents_end_at ON documents(end_at);
 CREATE INDEX IF NOT EXISTS idx_operation_validations_operation ON operation_validations(operation_id, operation_type);
+CREATE INDEX IF NOT EXISTS idx_entrepots_superviseur ON entrepots(superviseur_id);
+CREATE INDEX IF NOT EXISTS idx_ventes_validation ON ventes(validation_status, validation_step);
