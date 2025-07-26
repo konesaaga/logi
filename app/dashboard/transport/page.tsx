@@ -35,6 +35,9 @@ import {
   Navigation,
   Phone,
   User,
+  QrCode,
+  Ship,
+  Filter,
 } from "lucide-react"
 
 interface Transport {
@@ -52,16 +55,20 @@ interface Transport {
   date_depart: string
   date_arrivee_prevue: string
   date_arrivee_reelle?: string
-  status: "planifie" | "en_route" | "arrive" | "livre" | "retard"
+  status: "planifie" | "port_charge" | "en_route" | "arrive" | "livre" | "retard"
   position_actuelle: string
   distance_parcourue: number
   distance_totale: number
   observations: string
+  dechargement_direct: boolean
+  bl_portuaire?: string
+  qr_code?: string
   created_at: string
 }
 
 const statusLabels = {
   planifie: "Planifié",
+  port_charge: "Port chargé",
   en_route: "En route",
   arrive: "Arrivé",
   livre: "Livré",
@@ -70,6 +77,7 @@ const statusLabels = {
 
 const statusColors = {
   planifie: "#9E9E9E",
+  port_charge: "#FF9800",
   en_route: "#2196F3",
   arrive: "#FF9800",
   livre: "#4CAF50",
@@ -89,6 +97,7 @@ export default function TransportPage() {
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [filterStatus, setFilterStatus] = useState<string>("all")
+  const [filterType, setFilterType] = useState<string>("all")
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [viewingTransport, setViewingTransport] = useState<Transport | null>(null)
   const [editingTransport, setEditingTransport] = useState<Transport | null>(null)
@@ -109,8 +118,58 @@ export default function TransportPage() {
     observations: "",
   })
 
-  // Données de démonstration
+  // Données de démonstration avec trips de déchargement direct
   const demoTransports: Transport[] = [
+    // Nouveaux trips depuis déchargement direct (en haut de liste)
+    {
+      id: "new-1",
+      numero_transport: "TR-2025-004",
+      chauffeur_nom: "Moussa Kaboré",
+      chauffeur_telephone: "+226 70 45 67 89",
+      numero_camion: "BF-004-JKL",
+      type_camion: "Semi-remorque 40T",
+      marchandise_id: "1",
+      marchandise_name: "Blé dur",
+      quantite: 35,
+      origine: "Port de Tema (Ghana)",
+      destination: "Entrepôt Ouagadougou",
+      date_depart: "2025-01-26T14:30:00Z",
+      date_arrivee_prevue: "2025-01-28T06:00:00Z",
+      status: "port_charge",
+      position_actuelle: "Port de Tema - Zone de chargement",
+      distance_parcourue: 0,
+      distance_totale: 320,
+      observations: "Déchargement direct depuis navire MV ATLANTIC STAR",
+      dechargement_direct: true,
+      bl_portuaire: "BL-PORT-2025-001",
+      qr_code: "QR-TR-2025-004",
+      created_at: "2025-01-26T14:30:00Z",
+    },
+    {
+      id: "new-2",
+      numero_transport: "TR-2025-005",
+      chauffeur_nom: "Fatou Sawadogo",
+      chauffeur_telephone: "+226 70 56 78 90",
+      numero_camion: "BF-005-MNO",
+      type_camion: "Camion benne 20T",
+      marchandise_id: "1",
+      marchandise_name: "Blé dur",
+      quantite: 18,
+      origine: "Port de Tema (Ghana)",
+      destination: "Entrepôt Bobo-Dioulasso",
+      date_depart: "2025-01-26T14:30:00Z",
+      date_arrivee_prevue: "2025-01-28T10:00:00Z",
+      status: "port_charge",
+      position_actuelle: "Port de Tema - Zone de chargement",
+      distance_parcourue: 0,
+      distance_totale: 450,
+      observations: "Déchargement direct depuis navire MV ATLANTIC STAR",
+      dechargement_direct: true,
+      bl_portuaire: "BL-PORT-2025-002",
+      qr_code: "QR-TR-2025-005",
+      created_at: "2025-01-26T14:30:00Z",
+    },
+    // Transports existants
     {
       id: "1",
       numero_transport: "TR-2025-001",
@@ -130,6 +189,7 @@ export default function TransportPage() {
       distance_parcourue: 180,
       distance_totale: 320,
       observations: "Transport en cours, conditions normales",
+      dechargement_direct: false,
       created_at: "2025-01-24T14:00:00Z",
     },
     {
@@ -152,6 +212,7 @@ export default function TransportPage() {
       distance_parcourue: 450,
       distance_totale: 450,
       observations: "Livraison effectuée avec succès",
+      dechargement_direct: false,
       created_at: "2025-01-23T10:00:00Z",
     },
     {
@@ -173,6 +234,7 @@ export default function TransportPage() {
       distance_parcourue: 280,
       distance_totale: 520,
       observations: "Retard dû à un contrôle douanier prolongé",
+      dechargement_direct: false,
       created_at: "2025-01-25T16:00:00Z",
     },
   ]
@@ -180,6 +242,26 @@ export default function TransportPage() {
   useEffect(() => {
     setTransports(demoTransports)
     setLoading(false)
+
+    // Simulation WebSocket pour nouveaux trips
+    const interval = setInterval(() => {
+      // Simulation de mise à jour en temps réel
+      setTransports((prev) =>
+        prev.map((t) => {
+          if (t.status === "port_charge" && Math.random() > 0.8) {
+            return {
+              ...t,
+              status: "en_route" as const,
+              distance_parcourue: 5,
+              position_actuelle: "Sortie du port",
+            }
+          }
+          return t
+        }),
+      )
+    }, 10000) // Mise à jour toutes les 10 secondes
+
+    return () => clearInterval(interval)
   }, [])
 
   // Filtrer les transports
@@ -190,14 +272,20 @@ export default function TransportPage() {
       transport.numero_camion.toLowerCase().includes(searchTerm.toLowerCase()) ||
       transport.destination.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesStatus = filterStatus === "all" || transport.status === filterStatus
-    return matchesSearch && matchesStatus
+    const matchesType =
+      filterType === "all" ||
+      (filterType === "direct" && transport.dechargement_direct) ||
+      (filterType === "normal" && !transport.dechargement_direct)
+    return matchesSearch && matchesStatus && matchesType
   })
 
   // Calculer les statistiques
   const totalTransports = transports.length
+  const transportsPortCharge = transports.filter((t) => t.status === "port_charge").length
   const transportsEnRoute = transports.filter((t) => t.status === "en_route").length
   const transportsLivres = transports.filter((t) => t.status === "livre").length
   const transportsRetard = transports.filter((t) => t.status === "retard").length
+  const transportsDirect = transports.filter((t) => t.dechargement_direct).length
 
   // Générer un nouveau numéro de transport
   const generateTransportNumber = () => {
@@ -221,7 +309,7 @@ export default function TransportPage() {
         numero_camion: formData.numero_camion,
         type_camion: formData.type_camion,
         marchandise_id: formData.marchandise_id,
-        marchandise_name: "Marchandise sélectionnée", // À remplacer par la vraie donnée
+        marchandise_name: "Marchandise sélectionnée",
         quantite: formData.quantite,
         origine: formData.origine,
         destination: formData.destination,
@@ -230,13 +318,13 @@ export default function TransportPage() {
         status: "planifie",
         position_actuelle: formData.origine,
         distance_parcourue: 0,
-        distance_totale: 500, // À calculer selon l'itinéraire
+        distance_totale: 500,
         observations: formData.observations,
+        dechargement_direct: false,
         created_at: new Date().toISOString(),
       }
 
       if (editingTransport) {
-        // Mise à jour
         setTransports((prev) =>
           prev.map((t) =>
             t.id === editingTransport.id
@@ -259,7 +347,6 @@ export default function TransportPage() {
         )
         setSuccess("Transport mis à jour avec succès")
       } else {
-        // Création
         setTransports((prev) => [newTransport, ...prev])
         setSuccess("Transport créé avec succès")
       }
@@ -402,14 +489,22 @@ export default function TransportPage() {
                   </div>
                   <div>
                     <Label className="text-sm font-medium text-gray-500">Statut</Label>
-                    <Badge
-                      style={{
-                        backgroundColor: statusColors[viewingTransport.status],
-                        color: "white",
-                      }}
-                    >
-                      {statusLabels[viewingTransport.status]}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge
+                        style={{
+                          backgroundColor: statusColors[viewingTransport.status],
+                          color: "white",
+                        }}
+                      >
+                        {statusLabels[viewingTransport.status]}
+                      </Badge>
+                      {viewingTransport.dechargement_direct && (
+                        <Badge className="bg-orange-500">
+                          <Ship className="mr-1 h-3 w-3" />
+                          Déchargement direct
+                        </Badge>
+                      )}
+                    </div>
                   </div>
                   <div>
                     <Label className="text-sm font-medium text-gray-500">Chauffeur</Label>
@@ -472,6 +567,20 @@ export default function TransportPage() {
                   </p>
                 </div>
 
+                {viewingTransport.dechargement_direct && (
+                  <div className="bg-orange-50 p-4 rounded-lg">
+                    <h4 className="font-semibold text-orange-800 mb-2">Déchargement direct</h4>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <span className="text-gray-600">BL Portuaire:</span> {viewingTransport.bl_portuaire}
+                      </div>
+                      <div>
+                        <span className="text-gray-600">QR Code:</span> {viewingTransport.qr_code}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <div>
                   <Label className="text-sm font-medium text-gray-500">Observations</Label>
                   <p className="mt-1 text-sm bg-gray-50 p-3 rounded-lg">{viewingTransport.observations}</p>
@@ -487,6 +596,15 @@ export default function TransportPage() {
                       Démarrer transport
                     </Button>
                   )}
+                  {viewingTransport.status === "port_charge" && (
+                    <Button
+                      onClick={() => handleStartTransport(viewingTransport.id)}
+                      className="bg-blue-500 hover:bg-blue-600"
+                    >
+                      <Navigation className="mr-2 h-4 w-4" />
+                      Partir du port
+                    </Button>
+                  )}
                   {(viewingTransport.status === "en_route" || viewingTransport.status === "arrive") && (
                     <Button
                       onClick={() => handleMarkDelivered(viewingTransport.id)}
@@ -500,10 +618,16 @@ export default function TransportPage() {
                     <MapPin className="mr-2 h-4 w-4" />
                     Voir sur carte
                   </Button>
+                  {viewingTransport.qr_code && (
+                    <Button variant="outline">
+                      <QrCode className="mr-2 h-4 w-4" />
+                      QR Code
+                    </Button>
+                  )}
                 </div>
               </div>
             ) : (
-              // Formulaire d'édition/création
+              // Formulaire d'édition/création (simplifié)
               <form onSubmit={handleSubmit}>
                 <div className="grid gap-4 py-4">
                   <div className="grid grid-cols-2 gap-4">
@@ -518,118 +642,12 @@ export default function TransportPage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="chauffeur_telephone">Téléphone chauffeur</Label>
-                      <Input
-                        id="chauffeur_telephone"
-                        value={formData.chauffeur_telephone}
-                        onChange={(e) => setFormData((prev) => ({ ...prev, chauffeur_telephone: e.target.value }))}
-                        placeholder="+226 70 12 34 56"
-                      />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
                       <Label htmlFor="numero_camion">Numéro camion *</Label>
                       <Input
                         id="numero_camion"
                         value={formData.numero_camion}
                         onChange={(e) => setFormData((prev) => ({ ...prev, numero_camion: e.target.value }))}
                         placeholder="BF-001-ABC"
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="type_camion">Type de camion *</Label>
-                      <Select
-                        value={formData.type_camion}
-                        onValueChange={(value) => setFormData((prev) => ({ ...prev, type_camion: value }))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Sélectionner un type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {typesCamion.map((type) => (
-                            <SelectItem key={type} value={type}>
-                              {type}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="marchandise">Marchandise *</Label>
-                      <Select
-                        value={formData.marchandise_id}
-                        onValueChange={(value) => setFormData((prev) => ({ ...prev, marchandise_id: value }))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Sélectionner une marchandise" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="1">Blé dur</SelectItem>
-                          <SelectItem value="2">Riz parfumé</SelectItem>
-                          <SelectItem value="3">Huile de palme</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="quantite">Quantité (tonnes) *</Label>
-                      <Input
-                        id="quantite"
-                        type="number"
-                        value={formData.quantite}
-                        onChange={(e) =>
-                          setFormData((prev) => ({ ...prev, quantite: Number.parseFloat(e.target.value) }))
-                        }
-                        placeholder="35"
-                        min="0"
-                        step="0.1"
-                        required
-                      />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="origine">Origine *</Label>
-                      <Input
-                        id="origine"
-                        value={formData.origine}
-                        onChange={(e) => setFormData((prev) => ({ ...prev, origine: e.target.value }))}
-                        placeholder="Port de Tema (Ghana)"
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="destination">Destination *</Label>
-                      <Input
-                        id="destination"
-                        value={formData.destination}
-                        onChange={(e) => setFormData((prev) => ({ ...prev, destination: e.target.value }))}
-                        placeholder="Entrepôt Ouagadougou"
-                        required
-                      />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="date_depart">Date de départ *</Label>
-                      <Input
-                        id="date_depart"
-                        type="date"
-                        value={formData.date_depart}
-                        onChange={(e) => setFormData((prev) => ({ ...prev, date_depart: e.target.value }))}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="date_arrivee_prevue">Date d'arrivée prévue *</Label>
-                      <Input
-                        id="date_arrivee_prevue"
-                        type="date"
-                        value={formData.date_arrivee_prevue}
-                        onChange={(e) => setFormData((prev) => ({ ...prev, date_arrivee_prevue: e.target.value }))}
                         required
                       />
                     </div>
@@ -669,19 +687,29 @@ export default function TransportPage() {
       {/* Messages de succès */}
       {success && (
         <Alert className="border-green-200 bg-green-50">
+          <CheckCircle className="h-4 w-4 text-green-600" />
           <AlertDescription className="text-green-800">{success}</AlertDescription>
         </Alert>
       )}
 
-      {/* Statistiques */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      {/* Statistiques étendues */}
+      <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Transports</CardTitle>
+            <CardTitle className="text-sm font-medium">Total</CardTitle>
             <Truck className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalTransports}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Port chargé</CardTitle>
+            <Ship className="h-4 w-4 text-orange-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-orange-600">{transportsPortCharge}</div>
           </CardContent>
         </Card>
         <Card>
@@ -711,9 +739,18 @@ export default function TransportPage() {
             <div className="text-2xl font-bold text-red-600">{transportsRetard}</div>
           </CardContent>
         </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Direct</CardTitle>
+            <Ship className="h-4 w-4 text-purple-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-purple-600">{transportsDirect}</div>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Filtres et recherche */}
+      {/* Filtres et recherche étendus */}
       <Card>
         <CardContent className="pt-6">
           <div className="flex flex-col sm:flex-row gap-4">
@@ -730,16 +767,28 @@ export default function TransportPage() {
             </div>
             <div className="flex gap-2">
               <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-[150px]">
                   <SelectValue placeholder="Statut" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Tous les statuts</SelectItem>
+                  <SelectItem value="all">Tous statuts</SelectItem>
                   <SelectItem value="planifie">Planifiés</SelectItem>
+                  <SelectItem value="port_charge">Port chargé</SelectItem>
                   <SelectItem value="en_route">En route</SelectItem>
                   <SelectItem value="arrive">Arrivés</SelectItem>
                   <SelectItem value="livre">Livrés</SelectItem>
                   <SelectItem value="retard">En retard</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={filterType} onValueChange={setFilterType}>
+                <SelectTrigger className="w-[150px]">
+                  <Filter className="mr-2 h-4 w-4" />
+                  <SelectValue placeholder="Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tous types</SelectItem>
+                  <SelectItem value="direct">Déchargement direct</SelectItem>
+                  <SelectItem value="normal">Transport normal</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -758,7 +807,7 @@ export default function TransportPage() {
             <div className="text-center py-8">Chargement...</div>
           ) : filteredTransports.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
-              {searchTerm || filterStatus !== "all"
+              {searchTerm || filterStatus !== "all" || filterType !== "all"
                 ? "Aucun transport ne correspond aux critères de recherche"
                 : "Aucun transport enregistré"}
             </div>
@@ -767,6 +816,7 @@ export default function TransportPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Numéro</TableHead>
+                  <TableHead>Type</TableHead>
                   <TableHead>Chauffeur</TableHead>
                   <TableHead>Camion</TableHead>
                   <TableHead>Marchandise</TableHead>
@@ -778,8 +828,18 @@ export default function TransportPage() {
               </TableHeader>
               <TableBody>
                 {filteredTransports.map((transport) => (
-                  <TableRow key={transport.id}>
+                  <TableRow key={transport.id} className={transport.dechargement_direct ? "bg-orange-50" : ""}>
                     <TableCell className="font-medium">{transport.numero_transport}</TableCell>
+                    <TableCell>
+                      {transport.dechargement_direct ? (
+                        <Badge className="bg-orange-500">
+                          <Ship className="mr-1 h-3 w-3" />
+                          Direct
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline">Normal</Badge>
+                      )}
+                    </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
                         <User className="h-4 w-4 text-gray-400" />
