@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/contexts/auth-context"
@@ -36,11 +35,14 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="flex h-screen bg-gray-50">
+      {/* Sidebar fixe */}
       <DashboardSidebar />
-      <div className="lg:pl-72">
+
+      {/* Contenu principal */}
+      <div className="flex-1 flex flex-col overflow-hidden">
         <DashboardHeader />
-        <main className="p-6">{children}</main>
+        <main className="flex-1 overflow-y-auto p-6">{children}</main>
       </div>
     </div>
   )

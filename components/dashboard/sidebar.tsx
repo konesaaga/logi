@@ -23,6 +23,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Bell,
+  Package2,
 } from "lucide-react"
 
 const navigation = [
@@ -96,29 +97,28 @@ const navigation = [
   },
 ]
 
-interface DashboardSidebarProps {
-  className?: string
-}
-
-export function DashboardSidebar({ className }: DashboardSidebarProps) {
+export function DashboardSidebar() {
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
 
   return (
     <div
       className={cn(
-        "flex flex-col border-r bg-background transition-all duration-300",
-        collapsed ? "w-16" : "w-64",
-        className,
+        "flex flex-col bg-white border-r border-gray-200 transition-all duration-300",
+        collapsed ? "w-16" : "w-72",
       )}
     >
-      <div className="flex h-16 items-center justify-between px-4 border-b">
+      {/* Header avec logo */}
+      <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200">
         {!collapsed && (
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">L1</span>
+          <div className="flex items-center gap-2">
+            <div className="bg-[#0F4C75] p-2 rounded-lg">
+              <Package2 className="h-6 w-6 text-white" />
             </div>
-            <span className="font-bold text-lg">LOGI-ONE</span>
+            <div>
+              <h1 className="text-xl font-bold text-[#0F4C75]">LOGI-ONE</h1>
+              <p className="text-xs text-gray-500">Gestion Logistique v1.2</p>
+            </div>
           </div>
         )}
         <Button variant="ghost" size="sm" onClick={() => setCollapsed(!collapsed)} className="h-8 w-8 p-0">
@@ -126,42 +126,51 @@ export function DashboardSidebar({ className }: DashboardSidebarProps) {
         </Button>
       </div>
 
-      <ScrollArea className="flex-1 px-3 py-4">
-        <nav className="space-y-2">
+      {/* Navigation */}
+      <ScrollArea className="flex-1 px-4 py-4">
+        <nav className="space-y-1">
           {navigation.map((item) => {
             const isActive = pathname === item.href
             return (
               <Link key={item.name} href={item.href}>
-                <Button
-                  variant={isActive ? "secondary" : "ghost"}
+                <div
                   className={cn(
-                    "w-full justify-start h-10",
+                    "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer",
+                    isActive ? "bg-[#0F4C75] text-white" : "text-gray-700 hover:bg-gray-100",
                     collapsed && "justify-center px-2",
-                    isActive && "bg-secondary",
                   )}
                 >
-                  <item.icon className={cn("h-4 w-4", !collapsed && "mr-3")} />
+                  <item.icon className="h-5 w-5 flex-shrink-0" />
                   {!collapsed && (
                     <>
-                      <span className="flex-1 text-left">{item.name}</span>
+                      <span className="flex-1">{item.name}</span>
                       {item.badge && (
-                        <Badge variant={item.badge === "NEW" ? "default" : "destructive"} className="ml-auto text-xs">
+                        <Badge
+                          variant={item.badge === "NEW" ? "default" : "destructive"}
+                          className={cn(
+                            "text-xs",
+                            item.badge === "NEW"
+                              ? "bg-green-500 hover:bg-green-600"
+                              : "bg-[#FF5722] hover:bg-[#FF5722]/90",
+                          )}
+                        >
                           {item.badge}
                         </Badge>
                       )}
                     </>
                   )}
-                </Button>
+                </div>
               </Link>
             )
           })}
         </nav>
       </ScrollArea>
 
+      {/* Footer avec notification */}
       {!collapsed && (
-        <div className="p-4 border-t">
+        <div className="p-4 border-t border-gray-200">
           <div className="flex items-center space-x-3 p-3 bg-blue-50 rounded-lg">
-            <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+            <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
               <Bell className="h-4 w-4 text-white" />
             </div>
             <div className="flex-1 min-w-0">
@@ -171,6 +180,20 @@ export function DashboardSidebar({ className }: DashboardSidebarProps) {
           </div>
         </div>
       )}
+
+      {/* Version info */}
+      <div className="px-4 py-2 border-t border-gray-200">
+        <div className="text-xs text-gray-500 text-center">
+          {collapsed ? (
+            "v1.2"
+          ) : (
+            <>
+              LOGI-ONE v1.2
+              <br />© 2025 - Tous droits réservés
+            </>
+          )}
+        </div>
+      </div>
     </div>
   )
 }
