@@ -21,6 +21,7 @@ import {
   Settings,
   Menu,
   X,
+  FileText,
 } from "lucide-react"
 
 const navigation = [
@@ -31,10 +32,11 @@ const navigation = [
   { name: "Transport", href: "/dashboard/transport", icon: Truck },
   { name: "Ventes", href: "/dashboard/ventes", icon: TrendingUp },
   { name: "Entrepôts", href: "/dashboard/entrepots", icon: Warehouse },
+  { name: "Documents", href: "/dashboard/documents", icon: FileText, badge: 2 },
   { name: "Clients", href: "/dashboard/clients", icon: Users },
   { name: "Utilisateurs", href: "/dashboard/utilisateurs", icon: Users },
   { name: "Rapports", href: "/dashboard/rapports", icon: BarChart3 },
-  { name: "Alertes", href: "/dashboard/alertes", icon: Bell, badge: 3 },
+  { name: "Alertes", href: "/dashboard/alertes", icon: Bell, badge: 5 },
   { name: "Paramètres", href: "/dashboard/parametres", icon: Settings },
 ]
 
@@ -71,7 +73,7 @@ export function DashboardSidebar() {
             </div>
             <div>
               <h1 className="text-xl font-bold text-[#0F4C75]">LOGI-ONE</h1>
-              <p className="text-xs text-gray-500">Gestion Logistique</p>
+              <p className="text-xs text-gray-500">Gestion Logistique v1.2</p>
             </div>
           </div>
 
@@ -104,7 +106,7 @@ export function DashboardSidebar() {
           {/* Footer */}
           <div className="px-4 py-4 border-t border-gray-200">
             <div className="text-xs text-gray-500 text-center">
-              LOGI-ONE v1.0
+              LOGI-ONE v1.2
               <br />© 2025 - Tous droits réservés
             </div>
           </div>
