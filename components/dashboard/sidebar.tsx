@@ -96,11 +96,11 @@ const navigation = [
   },
 ]
 
-interface SidebarProps {
+interface DashboardSidebarProps {
   className?: string
 }
 
-export function Sidebar({ className }: SidebarProps) {
+export function DashboardSidebar({ className }: DashboardSidebarProps) {
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
 
