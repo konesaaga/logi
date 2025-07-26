@@ -31,8 +31,6 @@ import {
   FileSpreadsheet,
 } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
-import { format } from "date-fns"
-import { fr } from "date-fns/locale"
 
 interface Document {
   id: string
@@ -60,6 +58,23 @@ interface DocumentStats {
   valide: number
   expire_soon: number
   expire: number
+}
+
+// Fonction utilitaire pour formater les dates
+const formatDate = (dateString: string, options?: { includeTime?: boolean }) => {
+  const date = new Date(dateString)
+  const dateOptions: Intl.DateTimeFormatOptions = {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }
+
+  if (options?.includeTime) {
+    dateOptions.hour = "2-digit"
+    dateOptions.minute = "2-digit"
+  }
+
+  return date.toLocaleDateString("fr-FR", dateOptions)
 }
 
 export default function DocumentsPage() {
@@ -585,7 +600,7 @@ export default function DocumentsPage() {
                               ? "Aujourd'hui"
                               : doc.days_until_expiry !== undefined
                                 ? `Dans ${doc.days_until_expiry} jours`
-                                : format(new Date(doc.end_at), "dd/MM/yyyy", { locale: fr })}
+                                : formatDate(doc.end_at)}
                         </span>
                       </div>
                     )}
@@ -615,9 +630,7 @@ export default function DocumentsPage() {
                         <Download className="h-4 w-4" />
                       </Button>
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      {format(new Date(doc.created_at), "dd/MM/yyyy", { locale: fr })}
-                    </p>
+                    <p className="text-xs text-muted-foreground">{formatDate(doc.created_at)}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -655,11 +668,9 @@ export default function DocumentsPage() {
                                 ? "Expire aujourd'hui"
                                 : doc.days_until_expiry !== undefined
                                   ? `Expire dans ${doc.days_until_expiry} jours`
-                                  : format(new Date(doc.end_at), "dd/MM/yyyy", { locale: fr })}
+                                  : formatDate(doc.end_at)}
                           </p>
-                          <p className="text-xs text-muted-foreground">
-                            {format(new Date(doc.end_at), "dd/MM/yyyy", { locale: fr })}
-                          </p>
+                          <p className="text-xs text-muted-foreground">{formatDate(doc.end_at)}</p>
                         </div>
                       )}
 
@@ -737,9 +748,7 @@ export default function DocumentsPage() {
                             <p className="text-sm font-medium text-red-600">
                               Expiré il y a {Math.abs(doc.days_until_expiry || 0)} jours
                             </p>
-                            <p className="text-xs text-muted-foreground">
-                              {doc.end_at && format(new Date(doc.end_at), "dd/MM/yyyy", { locale: fr })}
-                            </p>
+                            <p className="text-xs text-muted-foreground">{doc.end_at && formatDate(doc.end_at)}</p>
                           </div>
                         </div>
                       ))}
@@ -767,9 +776,7 @@ export default function DocumentsPage() {
                             <p className="text-sm font-medium text-yellow-600">
                               Expire dans {doc.days_until_expiry} jours
                             </p>
-                            <p className="text-xs text-muted-foreground">
-                              {doc.end_at && format(new Date(doc.end_at), "dd/MM/yyyy", { locale: fr })}
-                            </p>
+                            <p className="text-xs text-muted-foreground">{doc.end_at && formatDate(doc.end_at)}</p>
                           </div>
                         </div>
                       ))}
@@ -797,9 +804,7 @@ export default function DocumentsPage() {
                             <p className="text-sm font-medium text-green-600">
                               Expire dans {doc.days_until_expiry} jours
                             </p>
-                            <p className="text-xs text-muted-foreground">
-                              {doc.end_at && format(new Date(doc.end_at), "dd/MM/yyyy", { locale: fr })}
-                            </p>
+                            <p className="text-xs text-muted-foreground">{doc.end_at && formatDate(doc.end_at)}</p>
                           </div>
                         </div>
                       ))}
@@ -859,17 +864,13 @@ export default function DocumentsPage() {
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Date de début:</span>
-                      <span className="font-medium">
-                        {format(new Date(selectedDocument.start_at), "dd/MM/yyyy", { locale: fr })}
-                      </span>
+                      <span className="font-medium">{formatDate(selectedDocument.start_at)}</span>
                     </div>
                     {selectedDocument.end_at && (
                       <>
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">Date d'expiration:</span>
-                          <span className="font-medium">
-                            {format(new Date(selectedDocument.end_at), "dd/MM/yyyy", { locale: fr })}
-                          </span>
+                          <span className="font-medium">{formatDate(selectedDocument.end_at)}</span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">Jours restants:</span>
@@ -901,7 +902,7 @@ export default function DocumentsPage() {
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Créé le:</span>
                       <span className="font-medium">
-                        {format(new Date(selectedDocument.created_at), "dd/MM/yyyy HH:mm", { locale: fr })}
+                        {formatDate(selectedDocument.created_at, { includeTime: true })}
                       </span>
                     </div>
                   </div>
