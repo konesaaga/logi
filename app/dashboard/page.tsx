@@ -2,6 +2,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import {
   Package,
   ShoppingCart,
@@ -11,7 +12,26 @@ import {
   AlertTriangle,
   ArrowUpRight,
   ArrowDownRight,
+  Warehouse,
+  BarChart3,
 } from "lucide-react"
+import {
+  LineChart,
+  Line,
+  AreaChart,
+  Area,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts"
 
 const stats = [
   {
@@ -64,6 +84,46 @@ const stats = [
   },
 ]
 
+// Données pour les graphiques des stocks d'entrepôts
+const stockData = [
+  { month: "Jan", entrepotA: 450, entrepotB: 320, entrepotC: 280 },
+  { month: "Fév", entrepotA: 520, entrepotB: 380, entrepotC: 310 },
+  { month: "Mar", entrepotA: 480, entrepotB: 420, entrepotC: 350 },
+  { month: "Avr", entrepotA: 600, entrepotB: 450, entrepotC: 380 },
+  { month: "Mai", entrepotA: 580, entrepotB: 480, entrepotC: 420 },
+  { month: "Jun", entrepotA: 650, entrepotB: 520, entrepotC: 450 },
+]
+
+// Données pour les marchandises stockées (camembert)
+const marchandisesData = [
+  { name: "Céréales", value: 35, color: "#4CAF50" },
+  { name: "Produits chimiques", value: 25, color: "#9C27B0" },
+  { name: "Textiles", value: 20, color: "#FF5722" },
+  { name: "Métaux", value: 15, color: "#2196F3" },
+  { name: "Autres", value: 5, color: "#FF9800" },
+]
+
+// Données pour l'évolution des stocks par catégorie
+const stockEvolutionData = [
+  { date: "01/01", perissable: 120, dangereux: 80, standard: 200 },
+  { date: "15/01", perissable: 110, dangereux: 85, standard: 220 },
+  { date: "01/02", perissable: 130, dangereux: 75, standard: 240 },
+  { date: "15/02", perissable: 125, dangereux: 90, standard: 260 },
+  { date: "01/03", perissable: 140, dangereux: 95, standard: 280 },
+  { date: "15/03", perissable: 135, dangereux: 88, standard: 300 },
+]
+
+// Données pour les mouvements de stock quotidiens
+const mouvementsData = [
+  { jour: "Lun", entrees: 45, sorties: 38 },
+  { jour: "Mar", entrees: 52, sorties: 42 },
+  { jour: "Mer", entrees: 38, sorties: 35 },
+  { jour: "Jeu", entrees: 48, sorties: 45 },
+  { jour: "Ven", entrees: 55, sorties: 50 },
+  { jour: "Sam", entrees: 32, sorties: 28 },
+  { jour: "Dim", entrees: 25, sorties: 20 },
+]
+
 const recentActivities = [
   {
     id: 1,
@@ -99,9 +159,15 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Tableau de bord</h1>
-        <p className="text-gray-600">Vue d'ensemble de votre activité logistique</p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Tableau de bord</h1>
+          <p className="text-gray-600">Vue d'ensemble de votre activité logistique</p>
+        </div>
+        <Button className="bg-[#0F4C75] hover:bg-[#0F4C75]/90">
+          <BarChart3 className="mr-2 h-4 w-4" />
+          Rapport complet
+        </Button>
       </div>
 
       {/* Stats Grid */}
@@ -132,7 +198,155 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      {/* Recent Activities */}
+      {/* Graphiques des stocks */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Évolution des stocks par entrepôt */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Warehouse className="h-5 w-5 text-[#0F4C75]" />
+              Évolution des stocks par entrepôt
+            </CardTitle>
+            <CardDescription>Stocks en tonnes sur les 6 derniers mois</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <AreaChart data={stockData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="month" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Area
+                  type="monotone"
+                  dataKey="entrepotA"
+                  stackId="1"
+                  stroke="#0F4C75"
+                  fill="#0F4C75"
+                  name="Entrepôt A"
+                />
+                <Area
+                  type="monotone"
+                  dataKey="entrepotB"
+                  stackId="1"
+                  stroke="#3282B8"
+                  fill="#3282B8"
+                  name="Entrepôt B"
+                />
+                <Area
+                  type="monotone"
+                  dataKey="entrepotC"
+                  stackId="1"
+                  stroke="#FF5722"
+                  fill="#FF5722"
+                  name="Entrepôt C"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Répartition des marchandises */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Package className="h-5 w-5 text-[#0F4C75]" />
+              Répartition des marchandises
+            </CardTitle>
+            <CardDescription>Pourcentage par type de marchandise</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={marchandisesData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {marchandisesData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Graphiques supplémentaires */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Évolution par catégorie */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Stocks par catégorie</CardTitle>
+            <CardDescription>Évolution des stocks selon la catégorie de marchandise</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={stockEvolutionData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Line
+                  type="monotone"
+                  dataKey="perissable"
+                  stroke="#FF5252"
+                  strokeWidth={2}
+                  name="Périssable"
+                  dot={{ fill: "#FF5252" }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="dangereux"
+                  stroke="#9C27B0"
+                  strokeWidth={2}
+                  name="Dangereux"
+                  dot={{ fill: "#9C27B0" }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="standard"
+                  stroke="#4CAF50"
+                  strokeWidth={2}
+                  name="Standard"
+                  dot={{ fill: "#4CAF50" }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Mouvements quotidiens */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Mouvements de stock</CardTitle>
+            <CardDescription>Entrées et sorties quotidiennes (cette semaine)</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={mouvementsData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="jour" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="entrees" fill="#4CAF50" name="Entrées" />
+                <Bar dataKey="sorties" fill="#FF5722" name="Sorties" />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Section activités et statuts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
@@ -169,31 +383,40 @@ export default function DashboardPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Statut des transports</CardTitle>
-            <CardDescription>Suivi en temps réel</CardDescription>
+            <CardTitle>Statut des entrepôts</CardTitle>
+            <CardDescription>Capacité et utilisation en temps réel</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
                 <div className="flex items-center space-x-3">
                   <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                  <span className="text-sm font-medium">En route</span>
+                  <div>
+                    <span className="text-sm font-medium">Entrepôt A - Ouagadougou</span>
+                    <p className="text-xs text-gray-500">Capacité: 85% utilisée</p>
+                  </div>
                 </div>
-                <Badge className="bg-green-500">8 camions</Badge>
-              </div>
-              <div className="flex items-center justify-between p-3 bg-orange-50 rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
-                  <span className="text-sm font-medium">À la frontière</span>
-                </div>
-                <Badge className="bg-orange-500">3 camions</Badge>
+                <Badge className="bg-green-500">650T</Badge>
               </div>
               <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
                 <div className="flex items-center space-x-3">
                   <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                  <span className="text-sm font-medium">Chargement port</span>
+                  <div>
+                    <span className="text-sm font-medium">Entrepôt B - Bobo-Dioulasso</span>
+                    <p className="text-xs text-gray-500">Capacité: 65% utilisée</p>
+                  </div>
                 </div>
-                <Badge className="bg-blue-500">1 camion</Badge>
+                <Badge className="bg-blue-500">520T</Badge>
+              </div>
+              <div className="flex items-center justify-between p-3 bg-orange-50 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
+                  <div>
+                    <span className="text-sm font-medium">Entrepôt C - Koudougou</span>
+                    <p className="text-xs text-gray-500">Capacité: 90% utilisée</p>
+                  </div>
+                </div>
+                <Badge className="bg-orange-500">450T</Badge>
               </div>
             </div>
           </CardContent>
